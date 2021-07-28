@@ -26,7 +26,7 @@ class Scrape():
 
         async def process(uri):
             r = await assesion.get(uri)
-            await r.html.arender(wait=5, sleep=5, timeout=20)
+            await r.html.arender(wait=10, sleep=10, timeout=20)
             return r
 
         readerList = list(spamreader)
@@ -82,8 +82,8 @@ class Scrape():
                 # print('[ERROR] データ取得処理成功 ... {}'.format(count))
                 count += 1
 
-            except:
-                print('[ERROR] データ取得処理失敗 ... {}'.format(count))
+            except Exception as e:
+                print('[ERROR] データ取得処理失敗 ... {}:[{}]'.format(count, e))
                 count += 1
                 continue
 
