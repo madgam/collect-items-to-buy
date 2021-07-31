@@ -35,6 +35,7 @@ class Scrape():
         count = 1
         for row in readerList:
             print('[INFO] データ取得処理中 ... {}/{}'.format(count, row_count))
+            print(row)
             try:
                 uri = row[0]
                 data = []
