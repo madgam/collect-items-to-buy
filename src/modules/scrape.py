@@ -26,15 +26,14 @@ class Scrape():
 
         async def process(uri):
             r = await assesion.get(uri)
-            await r.html.arender(wait=10, sleep=10, timeout=20)
+            await r.html.arender(wait=5, sleep=5, timeout=20)
             return r
 
         readerList = list(spamreader)
-        row_count = sum(1 for row in readerList)
+        row_count = len(readerList)
 
-        count = 1
-        for row in readerList:
-            print('[INFO] データ取得処理中 ... {}/{}'.format(count, row_count))
+        for i, row in enumerate(readerList):
+            print('[INFO] データ取得処理中 ... {}/{}'.format(i + 1, row_count))
             try:
                 uri = row[0]
                 data = []
@@ -80,11 +79,9 @@ class Scrape():
                 writer.writerow(data)
 
                 # print('[ERROR] データ取得処理成功 ... {}'.format(count))
-                count += 1
 
             except Exception as e:
-                print('[ERROR] データ取得処理失敗 ... {}:[{}]'.format(count, e))
-                count += 1
+                print('[ERROR] データ取得処理失敗 ... {}:[{}]'.format(i + 1, e))
                 continue
 
         f.close()
