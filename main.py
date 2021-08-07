@@ -23,7 +23,7 @@ def get_item(item: Item):
     # return {"hello": 'post'}
 
     scrape = Scrape()
-    scrape.getData([item.url])
+    scrape.getData([item.url.split(',')])
     # csv_files = glob.glob('csv/in/*.csv')
     # for csv_file in csv_files:
     #     with open(csv_file, newline='', encoding="utf-8-sig") as csvfile:

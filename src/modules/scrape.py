@@ -1,9 +1,9 @@
 import asyncio
-import csv
-import datetime
 from typing import List
+import numpy as np
+import pandas as pd
 
-from requests_html import AsyncHTMLSession
+from requests_html import AsyncHTMLSession, HTMLSession
 
 
 class Scrape():
@@ -11,37 +11,26 @@ class Scrape():
     def __init__(self):
         None
 
-    def getData(self, spamreader):
-        dt_now = datetime.datetime.now()
-        formated_dt_now = dt_now.strftime('%Y%m%d%H%M%S')
-        f = open('csv/out/out_{}.csv'.format(formated_dt_now), 'w')
-        writer = csv.writer(f)
-        data = []
+    def getData(self, uriList: List[str]):
         COLUMNS = ['URL', '商品名', '説明文', '素材', 'カラー',
                    '商品型番', 'コレクション', '価格', '最小サイズ', '最大サイズ']
-        for c in COLUMNS:
-            data.append(c)
-        writer.writerow(data)
         assesion = AsyncHTMLSession()
 
-        async def process(uri):
+        async def aprocess(uri: str):
             r = await assesion.get(uri)
             await r.html.arender(wait=10, sleep=10, timeout=20)
             return r
 
-        readerList = list(spamreader)
-        row_count = sum(1 for row in readerList)
+        print(uriList)
+        row_count = len(uriList)
 
-        count = 1
-        for row in readerList:
-            print('[INFO] データ取得処理中 ... {}/{}'.format(count, row_count))
-            print(row)
+        for i, uri in enumerate(uriList):
+            print('[INFO] データ取得処理中 ... {}/{}'.format(i + 1, row_count))
             try:
-                uri = row[0]
                 data = []
                 data.append(uri)
                 loop = asyncio.get_event_loop()
-                r = loop.run_until_complete(process(uri))
+                r = loop.run_until_complete(aprocess(uri))
 
                 # 商品名
                 productTitle = r.html.find('.breadcrumbs')[0].\
@@ -78,14 +67,11 @@ class Scrape():
                 data.append(minimumSize)
                 maxSize = '-' if not itemSizeList else itemSizeList[-1]
                 data.append(maxSize)
-                writer.writerow(data)
 
                 # print('[ERROR] データ取得処理成功 ... {}'.format(count))
-                count += 1
+
+                print(data)
 
             except Exception as e:
-                print('[ERROR] データ取得処理失敗 ... {}:[{}]'.format(count, e))
-                count += 1
+                print('[ERROR] データ取得処理失敗 ... {}:[{}]'.format(i + 1, e))
                 continue
-
-        f.close()
