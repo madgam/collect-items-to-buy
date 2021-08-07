@@ -1,7 +1,7 @@
 import csv
 import glob
 
-from modules.scrape import Scrape
+from src.modules.scrape import Scrape
 
 scrape = Scrape()
 csv_files = glob.glob('csv/in/*.csv')
