@@ -1,11 +1,11 @@
-from fastapi.responses import StreamingResponse
-import io
 import asyncio
+import io
 from typing import List
 
 import aiohttp
 import pandas as pd
 from bs4 import BeautifulSoup
+from fastapi.responses import StreamingResponse
 
 
 class Scrape():
@@ -70,21 +70,19 @@ class Scrape():
                 maxSize = '-' if not itemSizeList else itemSizeList[-1]
                 data.append(maxSize)
 
-                # print('[ERROR] データ取得処理成功 ... {}'.format(count))
-
                 df.loc[i] = data
-                # df.to_csv('data/data.csv')
+                # print('[ERROR] データ取得処理成功 ... {}'.format(count))
 
             except Exception as e:
                 print('[ERROR] データ取得処理失敗 ... {}:[{}]'.format(i + 1, e))
                 continue
 
-            stream = io.StringIO()
-            df.to_csv(stream, index=False)
-            # stream.getvalue()によってデータを取り出し
-            response = StreamingResponse(
-                iter([stream.getvalue()]), media_type="text/csv")
+        stream = io.StringIO()
+        df.to_csv(stream, index=False)
+        # stream.getvalue()によってデータを取り出し
+        response = StreamingResponse(
+            iter([stream.getvalue()]), media_type="text/csv")
 
-            response.headers["Content-Disposition"] = "attachment; filename=export.csv"
+        response.headers["Content-Disposition"] = "attachment; filename=export.csv"
 
-            return response
+        return response
