@@ -18,15 +18,7 @@ def index():
 
 
 @app.post("/items")
-def get_item(item: Item):
-    print(item.url)
-    # return {"hello": 'post'}
-
+async def get_item(item: Item):
     scrape = Scrape()
-    scrape.getData([item.url.split(',')])
-    # csv_files = glob.glob('csv/in/*.csv')
-    # for csv_file in csv_files:
-    #     with open(csv_file, newline='', encoding="utf-8-sig") as csvfile:
-    #         spamreader = csv.reader(csvfile, delimiter=' ', quotechar='|')
-    #         scrape.getData(spamreader)
+    await scrape.getData(item.url.split(','))
     return ''

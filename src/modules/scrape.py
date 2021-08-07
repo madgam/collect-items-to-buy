@@ -1,9 +1,11 @@
+from fastapi.responses import StreamingResponse
+import io
 import asyncio
 from typing import List
-import numpy as np
-import pandas as pd
 
-from requests_html import AsyncHTMLSession, HTMLSession
+import aiohttp
+import pandas as pd
+from bs4 import BeautifulSoup
 
 
 class Scrape():
@@ -11,17 +13,17 @@ class Scrape():
     def __init__(self):
         None
 
-    def getData(self, uriList: List[str]):
+    async def getData(self, uriList: List[str]):
         COLUMNS = ['URL', '商品名', '説明文', '素材', 'カラー',
                    '商品型番', 'コレクション', '価格', '最小サイズ', '最大サイズ']
-        assesion = AsyncHTMLSession()
+        df = pd.DataFrame(columns=COLUMNS)
 
-        async def aprocess(uri: str):
-            r = await assesion.get(uri)
-            await r.html.arender(wait=10, sleep=10, timeout=20)
-            return r
+        async def aprocess(url, session):
+            async with session.get(url) as response:
+                html = await response.text()
+                bs = BeautifulSoup(html, "html.parser")
+                return bs
 
-        print(uriList)
         row_count = len(uriList)
 
         for i, uri in enumerate(uriList):
@@ -29,22 +31,22 @@ class Scrape():
             try:
                 data = []
                 data.append(uri)
-                loop = asyncio.get_event_loop()
-                r = loop.run_until_complete(aprocess(uri))
+                async with aiohttp.ClientSession() as session:
+                    bs = await asyncio.gather(aprocess(uri, session))
 
                 # 商品名
-                productTitle = r.html.find('.breadcrumbs')[0].\
-                    find('.product')[0].text
+                productTitle = bs[0].find_all(class_='breadcrumbs')[0].\
+                    select('.product')[0].text.strip()
                 data.append(productTitle)
                 # 商品データ
-                itemInfo = r.html.find('.product-info-main')
+                itemInfo = bs[0].find_all(class_='product-info-main')
 
                 # 説明文
-                description = itemInfo[0].find('.overview')[0].text
+                description = itemInfo[0].select('.overview')[0].text.strip()
                 data.append(description)
 
-                itemTable = itemInfo[0].find('.additional-attributes-wrapper')
-                itemDetail = itemTable[0].find('p')
+                itemDetail = itemInfo[0].\
+                    select('.additional-attributes-wrapper > p')
                 # 素材
                 data.append(itemDetail[0].text.split(':')[1].strip())
                 # カラー
@@ -55,14 +57,14 @@ class Scrape():
                 data.append(itemDetail[3].text.split(':')[1].strip())
 
                 # 商品価格
-                priceInfo = itemInfo[0].find('.product-info-price')
-                justPrice = priceInfo[0].find('.price')
-                data.append(justPrice[0].text)
+                priceInfo = itemInfo[0].select('.product-info-price')
+                justPrice = priceInfo[0].select('.price')
+                data.append(justPrice[0].text.strip())
 
                 # サイズ一覧
-                itemSizes = itemInfo[0].find('.product-options-wrapper')
+                itemSizes = itemInfo[0].select('.product-options-wrapper')
                 itemSizeList: List[str] = [
-                    fr.text for fr in itemSizes[0].find('.super-attribute-select')[0].find(('li'))]
+                    fr.text.strip() for fr in itemSizes[0].select('.super-attribute-select > li')]
                 minimumSize = '-' if not itemSizeList else itemSizeList[0]
                 data.append(minimumSize)
                 maxSize = '-' if not itemSizeList else itemSizeList[-1]
@@ -70,8 +72,19 @@ class Scrape():
 
                 # print('[ERROR] データ取得処理成功 ... {}'.format(count))
 
-                print(data)
+                df.loc[i] = data
+                # df.to_csv('data/data.csv')
 
             except Exception as e:
                 print('[ERROR] データ取得処理失敗 ... {}:[{}]'.format(i + 1, e))
                 continue
+
+            stream = io.StringIO()
+            df.to_csv(stream, index=False)
+            # stream.getvalue()によってデータを取り出し
+            response = StreamingResponse(
+                iter([stream.getvalue()]), media_type="text/csv")
+
+            response.headers["Content-Disposition"] = "attachment; filename=export.csv"
+
+            return response

@@ -1,5 +1,6 @@
 astroid==2.4.1
 autopep8==1.5.2
+aiohttp==3.7.3
 beautifulsoup4==4.9.1
 CacheControl==0.12.6
 cachetools==4.1.0
