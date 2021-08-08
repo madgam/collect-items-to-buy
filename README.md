@@ -26,4 +26,4 @@ uvicorn \*.main:app --reload --host 0.0.0.0 --port 8000
 
 # API ドキュメントを参照する
 
-http://stark-sands-18335.herokuapp.com/docs
+https://stark-sands-18335.herokuapp.com/docs

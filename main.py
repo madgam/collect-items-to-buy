@@ -26,5 +26,4 @@ def index():
 @app.post("/items")
 async def get_item(item: Item):
     scrape = Scrape()
-    await scrape.getData(item.url.split(','))
-    return ''
+    return await scrape.getData(item.url.split(','))
